@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偏振光实验仪器控制台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0c10 0%, #161b22 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; color: #c9d1d9;
+        }
+        .container {
+            background: #161b22; border-radius: 20px;
+            border: 1px solid #30363d; padding: 40px; width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header h1 { color: #fff; font-size: 26px; margin-bottom: 8px; }
+        .header .subtitle { color: #8b949e; font-size: 14px; letter-spacing: 1px; }
+        .experiment-badge {
+            display: inline-block; background: rgba(31,111,235,0.15);
+            color: #58a6ff; padding: 4px 14px; border-radius: 20px;
+            font-size: 12px; margin-top: 10px; border: 1px solid rgba(31,111,235,0.3);
+        }
+        .instruments {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 14px; margin-bottom: 28px;
+        }
+        .instrument-card {
+            background: rgba(0,0,0,0.25); border-radius: 14px;
+            padding: 22px 18px; border: 1px solid #30363d;
+            text-align: center; cursor: pointer; transition: all 0.25s;
+            text-decoration: none; color: inherit; display: block;
+        }
+        .instrument-card:hover {
+            border-color: #58a6ff; background: rgba(31,111,235,0.08);
+            transform: translateY(-3px);
+        }
+        .instrument-icon {
+            width: 50px; height: 50px; margin: 0 auto 12px;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .instrument-card:nth-child(1) .instrument-icon { background: rgba(255,51,51,0.15); }
+        .instrument-card:nth-child(2) .instrument-icon { background: rgba(0,212,255,0.15); }
+        .instrument-card:nth-child(3) .instrument-icon { background: rgba(240,136,62,0.15); }
+        .instrument-card:nth-child(4) .instrument-icon { background: rgba(63,185,80,0.15); }
+        .instrument-card:nth-child(5) .instrument-icon { background: rgba(139,92,246,0.15); }
+        .instrument-name { color: #fff; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .instrument-desc { color: #8b949e; font-size: 12px; }
+        .info-section {
+            background: rgba(0,0,0,0.2); border-radius: 12px;
+            padding: 18px; border: 1px solid #30363d;
+            font-size: 13px; line-height: 1.8; color: #8b949e;
+        }
+        .info-section strong { color: #fff; }
+        .info-section code {
+            background: #21262d; padding: 2px 6px; border-radius: 4px;
+            font-family: 'Courier New', monospace; color: #00d4ff; font-size: 12px;
+        }
+        .hint { text-align: center; font-size: 12px; color: #484f58; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>偏振光与消光实验</h1>
+        <div class="subtitle">偏振光实验仪器控制面板总览</div>
+        <div class="experiment-badge">Experiment 37 · 大学物理实验</div>
+    </div>
+
+    <div class="instruments">
+        <a href="laser.html" class="instrument-card">
+            <div class="instrument-icon">🔴</div>
+            <div class="instrument-name">半导体激光器</div>
+            <div class="instrument-desc">开关控制 · 650nm</div>
+        </a>
+        <a href="polarizer.html" class="instrument-card">
+            <div class="instrument-icon">⬆️</div>
+            <div class="instrument-name">起偏器 P</div>
+            <div class="instrument-desc">透振方向 0°~360°</div>
+        </a>
+        <a href="waveplate.html" class="instrument-card">
+            <div class="instrument-icon">🔷</div>
+            <div class="instrument-name">1/4 波片 C</div>
+            <div class="instrument-desc">旋转角度 0°~360°</div>
+        </a>
+        <a href="analyzer.html" class="instrument-card">
+            <div class="instrument-icon">✅</div>
+            <div class="instrument-name">检偏器 A</div>
+            <div class="instrument-desc">透振方向 0°~360°</div>
+        </a>
+        <a href="powermeter.html" class="instrument-card" style="grid-column: span 2;">
+            <div class="instrument-icon">📟</div>
+            <div class="instrument-name">数字式光功率计</div>
+            <div class="instrument-desc">实时计算光强 · 验证马吕斯定律</div>
+        </a>
+    </div>
+
+    <div class="info-section">
+        <strong>使用说明：</strong><br>
+        1. 点击上方卡片进入各仪器的独立控制页面。<br>
+        2. 所有仪器状态通过浏览器 <code>localStorage</code> 实时共享。<br>
+        3. 光功率计页面会自动读取激光器、起偏器、波片和检偏器的设置，依据琼斯矩阵实时计算并显示光强。<br>
+        4. 建议按顺序操作：打开激光器 → 调节起偏器 → 放入波片 → 旋转检偏器 → 观察功率计读数。
+    </div>
+
+    <div class="hint">偏振光与消光实验 · 仪器控制面板</div>
+</div>
+</body>
+</html>
