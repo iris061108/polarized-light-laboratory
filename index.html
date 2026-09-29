@@ -2,113 +2,254 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>偏振光实验仪器控制台</title>
+    <title>偏振光与消光实验虚拟实验</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
         body {
-            background: linear-gradient(135deg, #0a0c10 0%, #161b22 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; color: #c9d1d9;
+            min-height:100vh;
+            background:linear-gradient(135deg,#0a1628 0%,#13294b 50%,#0a1628 100%);
+            color:#e8eef7;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            padding:40px 20px;
         }
-        .container {
-            background: #161b22; border-radius: 20px;
-            border: 1px solid #30363d; padding: 40px; width: 600px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            margin: -40px -20px 30px -20px;
+            width: calc(100% + 40px);
         }
-        .header { text-align: center; margin-bottom: 32px; }
-        .header h1 { color: #fff; font-size: 26px; margin-bottom: 8px; }
-        .header .subtitle { color: #8b949e; font-size: 14px; letter-spacing: 1px; }
-        .experiment-badge {
-            display: inline-block; background: rgba(31,111,235,0.15);
-            color: #58a6ff; padding: 4px 14px; border-radius: 20px;
-            font-size: 12px; margin-top: 10px; border: 1px solid rgba(31,111,235,0.3);
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+            white-space:nowrap;
         }
-        .instruments {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 14px; margin-bottom: 28px;
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
         }
-        .instrument-card {
-            background: rgba(0,0,0,0.25); border-radius: 14px;
-            padding: 22px 18px; border: 1px solid #30363d;
-            text-align: center; cursor: pointer; transition: all 0.25s;
-            text-decoration: none; color: inherit; display: block;
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h1 {
+            font-size:32px; letter-spacing:4px; margin-bottom:8px;
+            color:#fff; text-shadow:0 0 20px rgba(80,160,255,0.5);
         }
-        .instrument-card:hover {
-            border-color: #58a6ff; background: rgba(31,111,235,0.08);
-            transform: translateY(-3px);
+        .subtitle {
+            font-size:15px; color:#8ab4e8;
+            margin-bottom:50px; letter-spacing:2px;
         }
-        .instrument-icon {
-            width: 50px; height: 50px; margin: 0 auto 12px;
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
+        .intro {
+            max-width:920px; text-align:center; margin-bottom:40px;
+            color:#c5d5ea; font-size:14px; line-height:1.8;
         }
-        .instrument-card:nth-child(1) .instrument-icon { background: rgba(255,51,51,0.15); }
-        .instrument-card:nth-child(2) .instrument-icon { background: rgba(0,212,255,0.15); }
-        .instrument-card:nth-child(3) .instrument-icon { background: rgba(240,136,62,0.15); }
-        .instrument-card:nth-child(4) .instrument-icon { background: rgba(63,185,80,0.15); }
-        .instrument-card:nth-child(5) .instrument-icon { background: rgba(139,92,246,0.15); }
-        .instrument-name { color: #fff; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-        .instrument-desc { color: #8b949e; font-size: 12px; }
-        .info-section {
-            background: rgba(0,0,0,0.2); border-radius: 12px;
-            padding: 18px; border: 1px solid #30363d;
-            font-size: 13px; line-height: 1.8; color: #8b949e;
+        .cards {
+            display:flex; gap:24px; flex-wrap:wrap;
+            justify-content:center; max-width:1200px; margin-bottom:30px;
         }
-        .info-section strong { color: #fff; }
-        .info-section code {
-            background: #21262d; padding: 2px 6px; border-radius: 4px;
-            font-family: 'Courier New', monospace; color: #00d4ff; font-size: 12px;
+        .card {
+            width:240px; background:rgba(255,255,255,0.06);
+            border:1px solid rgba(100,160,255,0.3);
+            border-radius:12px; padding:24px 20px; cursor:pointer;
+            transition:all 0.3s ease; text-align:center; backdrop-filter:blur(6px);
         }
-        .hint { text-align: center; font-size: 12px; color: #484f58; margin-top: 20px; }
+        .card:hover {
+            transform:translateY(-6px); border-color:#5aa0ff;
+            box-shadow:0 12px 40px rgba(60,130,255,0.35);
+            background:rgba(255,255,255,0.1);
+        }
+        .card canvas {
+            width:200px; height:140px; border-radius:8px;
+            margin-bottom:14px; background:#000;
+        }
+        .card h3 { font-size:18px; margin-bottom:8px; color:#fff; }
+        .card p {
+            font-size:12px; line-height:1.7; color:#a8c4e8;
+            min-height:60px;
+        }
+        .card .tag {
+            display:inline-block; margin-top:10px; padding:4px 14px;
+            border-radius:20px; font-size:12px;
+            background:rgba(90,160,255,0.2); color:#7ab0ff;
+            border:1px solid rgba(90,160,255,0.4);
+        }
+        .footer { margin-top:30px; font-size:12px; color:#5a7aa0; }
+        .lab-card { border-color: rgba(255,180,60,0.5); }
+        .lab-card:hover { border-color:#ffaa44; box-shadow:0 12px 40px rgba(255,170,68,0.35); }
+        .lab-card .tag {
+            background: rgba(255,170,68,0.2); color:#ffaa44;
+            border-color: rgba(255,170,68,0.5);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>偏振光与消光实验</h1>
-        <div class="subtitle">偏振光实验仪器控制面板总览</div>
-        <div class="experiment-badge">Experiment 37 · 大学物理实验</div>
-    </div>
 
-    <div class="instruments">
-        <a href="laser.html" class="instrument-card">
-            <div class="instrument-icon">🔴</div>
-            <div class="instrument-name">半导体激光器</div>
-            <div class="instrument-desc">开关控制 · 650nm</div>
-        </a>
-        <a href="polarizer.html" class="instrument-card">
-            <div class="instrument-icon">⬆️</div>
-            <div class="instrument-name">起偏器 P</div>
-            <div class="instrument-desc">透振方向 0°~360°</div>
-        </a>
-        <a href="waveplate.html" class="instrument-card">
-            <div class="instrument-icon">🔷</div>
-            <div class="instrument-name">1/4 波片 C</div>
-            <div class="instrument-desc">旋转角度 0°~360°</div>
-        </a>
-        <a href="analyzer.html" class="instrument-card">
-            <div class="instrument-icon">✅</div>
-            <div class="instrument-name">检偏器 A</div>
-            <div class="instrument-desc">透振方向 0°~360°</div>
-        </a>
-        <a href="powermeter.html" class="instrument-card" style="grid-column: span 2;">
-            <div class="instrument-icon">📟</div>
-            <div class="instrument-name">数字式光功率计</div>
-            <div class="instrument-desc">实时计算光强 · 验证马吕斯定律</div>
-        </a>
-    </div>
-
-    <div class="info-section">
-        <strong>使用说明：</strong><br>
-        1. 点击上方卡片进入各仪器的独立控制页面。<br>
-        2. 所有仪器状态通过浏览器 <code>localStorage</code> 实时共享。<br>
-        3. 光功率计页面会自动读取激光器、起偏器、波片和检偏器的设置，依据琼斯矩阵实时计算并显示光强。<br>
-        4. 建议按顺序操作：打开激光器 → 调节起偏器 → 放入波片 → 旋转检偏器 → 观察功率计读数。
-    </div>
-
-    <div class="hint">偏振光与消光实验 · 仪器控制面板</div>
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html" class="active">首页</a>
+    <a href="laboratory.html">实验仿真</a>
+    <a href="laser.html">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html">1/4波片</a>
+    <a href="analyzer.html">检偏器</a>
+    <a href="powermeter.html">光功率计</a>
 </div>
+
+<h1>偏振光与消光实验虚拟实验</h1>
+<p class="subtitle">Observation &amp; Measurement of Polarized Light</p>
+
+<div class="cards">
+    <div class="card lab-card" onclick="location.href='laboratory.html'">
+        <canvas id="prevLab" width="200" height="140"></canvas>
+        <h3>实验仿真总览</h3>
+        <p>5 个仪器在同一页面独立调节，实时显示光路与光强计算结果。</p>
+        <span class="tag">★ 推荐 · 全部可调</span>
+    </div>
+
+    <div class="card" onclick="location.href='laser.html'">
+        <canvas id="prev1" width="200" height="140"></canvas>
+        <h3>半导体激光器</h3>
+        <p>650 nm 半导体激光光源，开关可控，部分偏振光输出。</p>
+        <span class="tag">光源 · 650 nm</span>
+    </div>
+
+    <div class="card" onclick="location.href='polarizer.html'">
+        <canvas id="prev2" width="200" height="140"></canvas>
+        <h3>起偏器 P</h3>
+        <p>将自然光/部分偏振光转换为线偏振光，0°~360° 透振方向调节。</p>
+        <span class="tag">偏振片 · 透振轴</span>
+    </div>
+
+    <div class="card" onclick="location.href='waveplate.html'">
+        <canvas id="prev3" width="200" height="140"></canvas>
+        <h3>1/4 波片 C</h3>
+        <p>引入 π/2 相位差，使线偏振光变为椭圆或圆偏振光。</p>
+        <span class="tag">波片 · 相位延迟</span>
+    </div>
+
+    <div class="card" onclick="location.href='analyzer.html'">
+        <canvas id="prev4" width="200" height="140"></canvas>
+        <h3>检偏器 A</h3>
+        <p>检验光的偏振态，0°~360° 透振方向调节，配合 P 验证马吕斯定律。</p>
+        <span class="tag">偏振片 · 分析</span>
+    </div>
+
+    <div class="card" onclick="location.href='powermeter.html'">
+        <canvas id="prev5" width="200" height="140"></canvas>
+        <h3>数字式光功率计</h3>
+        <p>实时测量透射光强（mW），自动根据其他仪器设置计算读数。</p>
+        <span class="tag">探测器 · 数值显示</span>
+    </div>
+</div>
+
+<script>
+// 实验仿真总览预览
+(function(){
+    const c = document.getElementById("prevLab");
+    const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    // 简化的光路示意
+    ctx.strokeStyle="#ff6666"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20,70); ctx.lineTo(180,70); ctx.stroke();
+    // 五个仪器方块
+    const labels = ["激光","P","C","A","计"];
+    const colors = ["#ffaa44","#5aa0ff","#f0883e","#3fb950","#00d4ff"];
+    for(let i=0;i<5;i++){
+        ctx.fillStyle=colors[i];
+        ctx.fillRect(28+i*30, 50, 20, 40);
+        ctx.fillStyle="#fff"; ctx.font="9px Microsoft Yahei";
+        ctx.fillText(labels[i], 30+i*30, 105);
+    }
+    ctx.fillStyle="#5aa0ff"; ctx.font="bold 11px Microsoft Yahei";
+    ctx.fillText("5个独立调节", 70, 30);
+})();
+
+// 激光器预览
+(function(){
+    const c = document.getElementById("prev1"); const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    // 激光器外壳
+    ctx.fillStyle="#aaa"; ctx.fillRect(20, 50, 60, 40);
+    ctx.fillStyle="#222"; ctx.fillRect(80, 60, 8, 20);
+    // 激光束
+    const on = true;
+    ctx.strokeStyle = on ? "#ff4444" : "#553333"; ctx.lineWidth=3;
+    ctx.shadowColor="#ff4444"; ctx.shadowBlur=on?12:0;
+    ctx.beginPath(); ctx.moveTo(88, 70); ctx.lineTo(180, 70); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle="#5aa0ff"; ctx.font="bold 12px Microsoft Yahei";
+    ctx.fillText("激光器 ON", 60, 120);
+})();
+
+// 起偏器预览
+(function(){
+    const c = document.getElementById("prev2"); const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    // 偏振片
+    ctx.fillStyle="#3a4a6a"; ctx.fillRect(80, 30, 40, 80);
+    ctx.fillStyle="#5aa0ff"; ctx.fillText("P", 95, 75);
+    // 透振方向箭头
+    ctx.strokeStyle="#00d4ff"; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(100, 110); ctx.lineTo(100, 25); ctx.stroke();
+    // 入射光
+    ctx.strokeStyle="#ff6666"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20, 70); ctx.lineTo(80, 70); ctx.stroke();
+    // 出射光
+    ctx.strokeStyle="#00d4ff"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(120, 70); ctx.lineTo(180, 70); ctx.stroke();
+})();
+
+// 1/4 波片预览
+(function(){
+    const c = document.getElementById("prev3"); const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    // 波片
+    ctx.fillStyle="#7a5a3a"; ctx.fillRect(80, 30, 40, 80);
+    ctx.fillStyle="#f0883e"; ctx.fillText("C", 95, 75);
+    // 快慢轴
+    ctx.strokeStyle="#f0883e"; ctx.lineWidth=2;
+    ctx.save(); ctx.translate(100, 70); ctx.rotate(Math.PI/4);
+    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(30, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(0, 30); ctx.stroke();
+    ctx.restore();
+    // 椭圆偏振
+    ctx.strokeStyle="#00d4ff"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(150, 70, 20, 10, Math.PI/6, 0, Math.PI*2); ctx.stroke();
+})();
+
+// 检偏器预览
+(function(){
+    const c = document.getElementById("prev4"); const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    ctx.fillStyle="#3a5a4a"; ctx.fillRect(80, 30, 40, 80);
+    ctx.fillStyle="#3fb950"; ctx.fillText("A", 95, 75);
+    ctx.strokeStyle="#ff6666"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20, 70); ctx.lineTo(80, 70); ctx.stroke();
+    ctx.strokeStyle="#00d4ff"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(120, 70); ctx.lineTo(180, 70); ctx.stroke();
+    ctx.strokeStyle="#3fb950"; ctx.lineWidth=2;
+    ctx.save(); ctx.translate(100, 70); ctx.rotate(Math.PI/6);
+    ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(0, 30); ctx.stroke();
+    ctx.restore();
+})();
+
+// 光功率计预览
+(function(){
+    const c = document.getElementById("prev5"); const ctx = c.getContext("2d");
+    ctx.fillStyle="#0d1b2a"; ctx.fillRect(0,0,200,140);
+    // 探测器
+    ctx.fillStyle="#2a3a5a"; ctx.fillRect(120, 50, 50, 40);
+    ctx.fillStyle="#00d4ff"; ctx.font="bold 16px monospace";
+    ctx.fillText("3.42", 160, 75);
+    ctx.fillStyle="#888"; ctx.font="10px Microsoft Yahei";
+    ctx.fillText("mW", 188, 75);
+    // 光线
+    ctx.strokeStyle="#00d4ff"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20, 70); ctx.lineTo(120, 70); ctx.stroke();
+})();
+</script>
 </body>
 </html>

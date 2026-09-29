@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>偏振光实验仿真 · 实验仿真总览</title>
+    <style>
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
+        body {background:#f4f6f9;}
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+        }
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
+        }
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h2 {margin: 18px 0 12px 16px; color:#0d1b2a;}
+        .container {
+            max-width: 1280px; margin: 0 auto; padding: 16px;
+        }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .panel {
+            background:#fff; padding:16px; border-radius:7px;
+            box-shadow:0 1px 4px #0001;
+        }
+        .diagram-box { flex: 1 1 760px; }
+        .ctrl-section { flex: 1 1 480px; }
+
+        /* 全光路画布 */
+        .optical-canvas {
+            display:block; margin:0 auto;
+            background:#0a1628; border-radius:8px;
+        }
+
+        /* 控制面板内部 */
+        .ctrl-row {
+            display:flex; gap:10px; align-items:center; margin: 8px 0;
+        }
+        .ctrl-row label {
+            min-width:90px; font-size:13px; color:#444;
+        }
+        input[type=range] {
+            flex:1; margin:0;
+        }
+        .val {
+            min-width:60px; color:#d02828; font-weight:bold;
+            font-family:Consolas,monospace; font-size:14px; text-align:right;
+        }
+        .quick-row {
+            display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;
+        }
+        .quick-row button {
+            padding:3px 10px; font-size:11px; cursor:pointer;
+            background:#e8eef7; border:1px solid #c5d5ea; border-radius:4px;
+            color:#1a5fb4;
+        }
+        .quick-row button:hover { background:#1a5fb4; color:#fff; }
+        .toggle-btn {
+            padding:8px 18px; font-size:14px; cursor:pointer; border:none;
+            border-radius:5px; background:#c5d5ea; color:#1a5fb4;
+            transition:all 0.2s; margin-right:8px;
+        }
+        .toggle-btn.on { background:#c00000; color:#fff; }
+        .toggle-btn:hover { opacity:0.85; }
+
+        .instr-card {
+            background:#fff; border-radius:7px; padding:14px;
+            box-shadow:0 1px 4px #0001; margin-bottom:12px;
+        }
+        .instr-title {
+            font-size:14px; font-weight:bold; color:#0d1b2a;
+            margin-bottom:10px; padding-bottom:6px; border-bottom:1px dashed #c5d5ea;
+            display:flex; align-items:center;
+        }
+        .instr-title .badge {
+            background:#5aa0ff; color:#fff; padding:2px 8px;
+            border-radius:10px; font-size:11px; margin-right:8px;
+        }
+
+        /* 读数面板 */
+        .readout-panel {
+            background: linear-gradient(135deg, #0d1b2a, #1b2d4a);
+            color: #fff; padding: 18px 22px; border-radius:7px;
+            margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,0.2);
+        }
+        .readout-panel h3 {
+            color:#8ab4e8; font-size:13px; margin-bottom:8px;
+            text-transform:uppercase; letter-spacing:1px;
+        }
+        .main-reading {
+            font-family:Consolas,monospace; font-size:42px;
+            color:#00d4ff; text-shadow:0 0 16px rgba(0,212,255,0.4);
+            font-weight:bold; line-height:1.2;
+        }
+        .main-reading.off { color:#444; text-shadow:none; }
+        .sub-info {
+            display:flex; gap:24px; margin-top:12px; font-size:13px;
+            color:#a8c4e8; flex-wrap:wrap;
+        }
+        .sub-info b { color:#00d4ff; font-family:Consolas,monospace; }
+
+        /* 公式区 */
+        .formula {
+            background:#f9fafc; padding:12px 16px; border-radius:6px;
+            font-family:Consolas,monospace; font-size:13px; color:#1a5fb4;
+            margin-top:10px; line-height:1.8;
+            border-left:3px solid #5aa0ff;
+        }
+        .bar-track {
+            height:8px; background:#e8eef7; border-radius:4px;
+            margin-top:10px; overflow:hidden;
+        }
+        .bar-fill {
+            height:100%; background:linear-gradient(90deg,#1a5fb4,#00d4ff);
+            width:0%; border-radius:4px; transition:width 0.2s;
+        }
+        .desc {
+            background:#fff; padding:14px 18px; border-radius:7px;
+            margin-top:16px; line-height:1.8; font-size:14px; color:#333;
+            box-shadow:0 1px 4px #0001;
+        }
+        .desc h4 { color:#1a5fb4; margin-bottom:8px; }
+        .desc p { margin-bottom:8px; }
+        .desc code {
+            background:#f4f6f9; padding:2px 6px; border-radius:3px;
+            font-family:Consolas,monospace; color:#c00000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html">首页</a>
+    <a href="laboratory.html" class="active">实验仿真</a>
+    <a href="laser.html">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html">1/4波片</a>
+    <a href="analyzer.html">检偏器</a>
+    <a href="powermeter.html">光功率计</a>
+</div>
+
+<div class="container">
+    <h2>偏振光与消光实验 · 仿真总览</h2>
+
+    <!-- 主光路 + 读数 -->
+    <div class="row">
+        <div class="panel diagram-box" style="flex:1 1 760px;">
+            <canvas id="opticalCanvas" class="optical-canvas" width="760" height="280"></canvas>
+            <p style="text-align:center;font-size:13px;color:#666;margin-top:6px;">
+                完整光路示意：激光器 → 起偏器 P → 1/4 波片 C → 检偏器 A → 光功率计（独立调节）
+            </p>
+        </div>
+
+        <div class="readout-panel" style="flex:1 1 420px;">
+            <h3>实时光强读数 · Digital Power Meter</h3>
+            <div class="main-reading off" id="mainReading">0.000 mW</div>
+            <div class="sub-info">
+                <span>当前偏振态：<b id="polarState">— 无光 —</b></span>
+                <span>占满量程：<b id="percentLabel">0.0%</b></span>
+            </div>
+            <div class="bar-track">
+                <div class="bar-fill" id="barFill"></div>
+            </div>
+            <div class="formula" id="formulaText">
+                I = I₀[cos²ψ·cos²φ + sin²ψ·sin²φ]<br>
+                φ = P − C = 0°, ψ = A − C = 0°
+            </div>
+        </div>
+    </div>
+
+    <!-- 5个仪器独立控制面板 -->
+    <div class="row">
+        <!-- 激光器 -->
+        <div class="instr-card" style="flex:1 1 220px;">
+            <div class="instr-title">
+                <span class="badge">1</span>半导体激光器
+            </div>
+            <button class="toggle-btn on" id="btnLaser" onclick="toggleLaser()">● ON</button>
+            <span style="font-size:12px;color:#666;margin-left:6px;">650 nm / 5 mW</span>
+            <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.6;">
+                波长固定 650 nm；本实验采用部分偏振光输出，需配合起偏器使用。
+            </div>
+        </div>
+
+        <!-- 起偏器 -->
+        <div class="instr-card" style="flex:1 1 220px;">
+            <div class="instr-title">
+                <span class="badge">2</span>起偏器 P
+            </div>
+            <div class="ctrl-row">
+                <label>透振方向</label>
+                <input type="range" id="slP" min="0" max="360" step="1" value="0">
+                <span class="val" id="showP">0°</span>
+            </div>
+            <div class="quick-row">
+                <button onclick="setSl('slP',0)">0°</button>
+                <button onclick="setSl('slP',45)">45°</button>
+                <button onclick="setSl('slP',90)">90°</button>
+                <button onclick="setSl('slP',135)">135°</button>
+                <button onclick="setSl('slP',180)">180°</button>
+            </div>
+        </div>
+
+        <!-- 1/4 波片 -->
+        <div class="instr-card" style="flex:1 1 220px;">
+            <div class="instr-title">
+                <span class="badge">3</span>1/4 波片 C
+            </div>
+            <div class="ctrl-row">
+                <label>旋转角度</label>
+                <input type="range" id="slC" min="0" max="360" step="1" value="0">
+                <span class="val" id="showC">0°</span>
+            </div>
+            <div class="quick-row">
+                <button onclick="setSl('slC',0)">0°</button>
+                <button onclick="setSl('slC',15)">15°</button>
+                <button onclick="setSl('slC',30)">30°</button>
+                <button onclick="setSl('slC',45)">45°</button>
+                <button onclick="setSl('slC',60)">60°</button>
+                <button onclick="setSl('slC',90)">90°</button>
+            </div>
+        </div>
+
+        <!-- 检偏器 -->
+        <div class="instr-card" style="flex:1 1 220px;">
+            <div class="instr-title">
+                <span class="badge">4</span>检偏器 A
+            </div>
+            <div class="ctrl-row">
+                <label>透振方向</label>
+                <input type="range" id="slA" min="0" max="360" step="1" value="0">
+                <span class="val" id="showA">0°</span>
+            </div>
+            <div class="quick-row">
+                <button onclick="setSl('slA',0)">0°</button>
+                <button onclick="setSl('slA',45)">45°</button>
+                <button onclick="setSl('slA',90)">90°</button>
+                <button onclick="setSl('slA',135)">135°</button>
+                <button onclick="setSl('slA',180)">180°</button>
+            </div>
+        </div>
+
+        <!-- 光功率计（显示） -->
+        <div class="instr-card" style="flex:1 1 220px;">
+            <div class="instr-title">
+                <span class="badge">5</span>光功率计
+            </div>
+            <div id="miniMeter" style="font-family:Consolas,monospace;font-size:30px;
+                color:#00d4ff;background:#0d1b2a;padding:14px;border-radius:6px;
+                text-align:center;text-shadow:0 0 8px rgba(0,212,255,0.3);">
+                0.000 mW
+            </div>
+            <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.6;">
+                量程 0~5 mW，分辨率 0.001 mW，根据其他 4 仪器自动计算。
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细说明 -->
+    <div class="desc">
+        <h4>实验原理与公式</h4>
+        <p>线偏振光通过 1/4 波片后变为椭圆偏振光（特殊情况下变为圆偏振光），
+            再经过检偏器时，根据马吕斯定律及其推广形式，光强为：
+            <code>I = I₀ [cos²(ψ)·cos²(φ) + sin²(ψ)·sin²(φ)]</code>，
+            其中 φ = P − C 为起偏器与波片快轴的夹角，
+            ψ = A − C 为检偏器与波片快轴的夹角，
+            <code>I₀</code> 为激光器最大输出功率（5 mW）。</p>
+        <p>当波片快轴与入射线偏振方向平行时（φ = 0°），上式退化为马吕斯定律
+            <code>I = I₀·cos²(A − P)</code>；
+            当 φ = 45° 时，输出为圆偏振光，
+            此时旋转检偏器光强保持不变（恒为 I₀/2）。</p>
+    </div>
+</div>
+
+<script>
+const STORAGE = {
+    laser: 'polarization_laserOn',
+    P: 'polarization_polarizerAngle',
+    C: 'polarization_waveplateAngle',
+    A: 'polarization_analyzerAngle'
+};
+const I0 = 5.0;
+
+// ============ State management ============
+let state = {
+    laserOn: localStorage.getItem(STORAGE.laser) === 'true',
+    P: parseFloat(localStorage.getItem(STORAGE.P) || '0'),
+    C: parseFloat(localStorage.getItem(STORAGE.C) || '0'),
+    A: parseFloat(localStorage.getItem(STORAGE.A) || '0')
+};
+
+function saveState() {
+    localStorage.setItem(STORAGE.laser, state.laserOn);
+    localStorage.setItem(STORAGE.P, state.P.toString());
+    localStorage.setItem(STORAGE.C, state.C.toString());
+    localStorage.setItem(STORAGE.A, state.A.toString());
+}
+
+// ============ Compute intensity ============
+function deg2rad(d) { return d * Math.PI / 180; }
+function compute() {
+    if (!state.laserOn) return 0;
+    const phi = deg2rad(state.P - state.C);
+    const psi = deg2rad(state.A - state.C);
+    const cP = Math.cos(phi), sP = Math.sin(phi);
+    const cA = Math.cos(psi), sA = Math.sin(psi);
+    return I0 * (cA*cA * cP*cP + sA*sA * sP*sP);
+}
+function polarState() {
+    if (!state.laserOn) return '— 无光 —';
+    const phiAbs = Math.abs((state.P - state.C) % 180);
+    if (phiAbs < 2 || Math.abs(phiAbs - 90) < 2) return '线偏振光';
+    if (Math.abs(phiAbs - 45) < 2) return '圆偏振光';
+    return '椭圆偏振光';
+}
+
+// ============ UI updates ============
+function toggleLaser() {
+    state.laserOn = !state.laserOn;
+    const btn = document.getElementById('btnLaser');
+    btn.textContent = state.laserOn ? '● ON' : '○ OFF';
+    btn.classList.toggle('on', state.laserOn);
+    saveState(); update();
+}
+function setSl(id, v) {
+    document.getElementById(id).value = v;
+    document.getElementById(id).dispatchEvent(new Event('input'));
+}
+
+function update() {
+    document.getElementById('showP').textContent = state.P.toFixed(0) + '°';
+    document.getElementById('showC').textContent = state.C.toFixed(0) + '°';
+    document.getElementById('showA').textContent = state.A.toFixed(0) + '°';
+
+    const I = compute();
+    const pct = (I / I0) * 100;
+    const main = document.getElementById('mainReading');
+    const mini = document.getElementById('miniMeter');
+    if (state.laserOn) {
+        main.textContent = I.toFixed(3) + ' mW';
+        main.classList.remove('off');
+        mini.textContent = I.toFixed(3) + ' mW';
+    } else {
+        main.textContent = '0.000 mW';
+        main.classList.add('off');
+        mini.textContent = '0.000 mW';
+    }
+    document.getElementById('polarState').textContent = polarState();
+    document.getElementById('percentLabel').textContent = pct.toFixed(1) + '%';
+    document.getElementById('barFill').style.width = pct + '%';
+
+    const phiDeg = state.P - state.C;
+    const psiDeg = state.A - state.C;
+    document.getElementById('formulaText').innerHTML =
+        `I = I₀[cos²ψ·cos²φ + sin²ψ·sin²φ]<br>φ = P − C = ${phiDeg}°, ψ = A − C = ${psiDeg}°`;
+
+    drawOptical();
+}
+
+// ============ Optical path diagram ============
+const cv = document.getElementById('opticalCanvas');
+const ctx = cv.getContext('2d');
+const CW = 760, CH = 280;
+
+function drawOptical() {
+    ctx.fillStyle = '#0a1628'; ctx.fillRect(0,0,CW,CH);
+
+    const cy = CH/2;
+    const startX = 30;
+    const positions = [
+        { x: 30, type:'laser' },
+        { x: 170, type:'polarizer', label:'P', color:'#5aa0ff' },
+        { x: 330, type:'waveplate', label:'C', color:'#f0883e' },
+        { x: 490, type:'analyzer', label:'A', color:'#3fb950' },
+        { x: 650, type:'meter' }
+    ];
+
+    // 底座
+    ctx.fillStyle = '#2a3a5a'; ctx.fillRect(20, cy+50, 720, 8);
+    // 光路主线
+    ctx.strokeStyle = state.laserOn ? '#ff6666' : '#553333';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(startX+50, cy); ctx.lineTo(positions[4].x, cy); ctx.stroke();
+
+    // 仪器1：激光器
+    ctx.fillStyle = '#888';
+    ctx.fillRect(positions[0].x, cy-25, 50, 50);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(positions[0].x+50, cy-8, 8, 16);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Microsoft Yahei';
+    ctx.fillText('激光', positions[0].x+12, cy+5);
+    ctx.fillText('器', positions[0].x+12, cy+18);
+
+    // 仪器2：起偏器
+    drawPolarizer(positions[1].x, cy, '#5aa0ff', 'P', state.P);
+
+    // 仪器3：1/4 波片
+    drawWaveplate(positions[2].x, cy, '#f0883e', 'C', state.C);
+
+    // 仪器4：检偏器
+    drawPolarizer(positions[3].x, cy, '#3fb950', 'A', state.A);
+
+    // 仪器5：光功率计
+    ctx.fillStyle = '#2a3a5a';
+    ctx.fillRect(positions[4].x-5, cy-22, 60, 44);
+    ctx.fillStyle = state.laserOn ? '#00d4ff' : '#333';
+    ctx.font = 'bold 13px Consolas';
+    ctx.fillText(compute().toFixed(2), positions[4].x+2, cy+5);
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px Microsoft Yahei';
+    ctx.fillText('功率计', positions[4].x+5, cy+18);
+
+    // 当前角度显示
+    ctx.fillStyle = '#8ab4e8'; ctx.font = '11px Consolas';
+    ctx.fillText('P=' + state.P + '°', positions[1].x-15, cy+75);
+    ctx.fillText('C=' + state.C + '°', positions[2].x-15, cy+75);
+    ctx.fillText('A=' + state.A + '°', positions[3].x-15, cy+75);
+
+    // 偏振态指示
+    ctx.fillStyle = '#ffaa44';
+    ctx.font = 'bold 13px Microsoft Yahei';
+    ctx.fillText('偏振态：' + polarState(), 30, 25);
+
+    // 状态指示
+    ctx.fillStyle = state.laserOn ? '#3fb950' : '#888';
+    ctx.beginPath(); ctx.arc(CW-100, 22, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '11px Microsoft Yahei';
+    ctx.fillText(state.laserOn ? 'LASER ON' : 'LASER OFF', CW-88, 26);
+}
+
+function drawPolarizer(cx, cy, color, label, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // 偏振片方块
+    ctx.fillStyle = '#3a4a6a';
+    ctx.fillRect(-22, -32, 44, 64);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-22, -32, 44, 64);
+    // 透振方向箭头
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(0, -42); ctx.lineTo(0, 42); ctx.stroke();
+    // 箭头
+    ctx.beginPath();
+    ctx.moveTo(-4, 36); ctx.lineTo(0, 44); ctx.lineTo(4, 36);
+    ctx.stroke();
+    // 旋转指示
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 48, deg2rad(angle)-0.15, deg2rad(angle)+0.15);
+    ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Microsoft Yahei';
+    ctx.fillText(label, -7, 5);
+    ctx.fillStyle = '#8ab4e8'; ctx.font = '10px Consolas';
+    ctx.fillText(angle+'°', -14, -52);
+    ctx.restore();
+}
+
+function drawWaveplate(cx, cy, color, label, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.fillStyle = '#7a5a3a';
+    ctx.fillRect(-22, -32, 44, 64);
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.strokeRect(-22, -32, 44, 64);
+    // 快慢轴（旋转）
+    ctx.rotate(deg2rad(angle));
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(-36, 0); ctx.lineTo(36, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -36); ctx.lineTo(0, 36); ctx.stroke();
+    // 箭头
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(30, -4); ctx.lineTo(38, 0); ctx.lineTo(30, 4); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-4, -30); ctx.lineTo(0, -38); ctx.lineTo(4, -30); ctx.fill();
+    ctx.restore();
+    // 标签
+    ctx.fillStyle = color; ctx.font = 'bold 14px Microsoft Yahei';
+    ctx.fillText(label, cx-7, cy+5);
+    ctx.fillStyle = '#8ab4e8'; ctx.font = '10px Consolas';
+    ctx.fillText(angle+'°', cx-14, cy-52);
+}
+
+// ============ Wire events ============
+document.getElementById('slP').addEventListener('input', e => {
+    state.P = parseFloat(e.target.value); saveState(); update();
+});
+document.getElementById('slC').addEventListener('input', e => {
+    state.C = parseFloat(e.target.value); saveState(); update();
+});
+document.getElementById('slA').addEventListener('input', e => {
+    state.A = parseFloat(e.target.value); saveState(); update();
+});
+
+// Init from storage
+document.getElementById('slP').value = state.P;
+document.getElementById('slC').value = state.C;
+document.getElementById('slA').value = state.A;
+const btn = document.getElementById('btnLaser');
+btn.textContent = state.laserOn ? '● ON' : '○ OFF';
+btn.classList.toggle('on', state.laserOn);
+
+update();
+</script>
+</body>
+</html>

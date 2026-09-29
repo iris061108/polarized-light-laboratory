@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>半导体激光器 · 偏振光实验</title>
+    <style>
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
+        body {background:#f4f6f9;}
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+        }
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
+        }
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h2 {margin: 18px 0 12px 0; color:#0d1b2a;}
+        .container { max-width: 1260px; margin: 0 auto; padding: 16px; }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .panel { background:#fff; padding:16px; border-radius:7px; box-shadow:0 1px 4px #0001; }
+        .diagram-box { flex: 1 1 640px; }
+        .ctrl-section { flex: 1 1 420px; }
+        canvas { display:block; margin:0 auto; background:#0a1628; border-radius:6px; }
+        .control-row {
+            display:flex; align-items:center; gap:14px; margin:18px 0;
+        }
+        .control-row label {
+            min-width:90px; font-size:14px; color:#333;
+        }
+        .toggle-btn {
+            padding:10px 24px; font-size:16px; cursor:pointer; border:none;
+            border-radius:6px; background:#c5d5ea; color:#1a5fb4;
+            transition:all 0.2s; min-width:120px;
+        }
+        .toggle-btn.on { background:#c00000; color:#fff; box-shadow:0 0 12px rgba(192,0,0,0.4); }
+        .toggle-btn:hover { opacity:0.9; }
+        .val {
+            font-family:Consolas,monospace; font-weight:bold;
+            color:#d02828; font-size:16px;
+        }
+        .info-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:10px;
+            margin-top:12px;
+        }
+        .info-item {
+            background:#f9fafc; padding:10px 14px; border-radius:6px;
+            border-left:3px solid #5aa0ff;
+        }
+        .info-item .lbl { font-size:11px; color:#888; }
+        .info-item .vv { font-size:16px; color:#0d1b2a; font-weight:bold; font-family:Consolas,monospace; }
+        .desc {
+            background:#fff; padding:18px 22px; border-radius:7px;
+            margin-top:16px; line-height:1.85; font-size:14px; color:#333;
+            box-shadow:0 1px 4px #0001;
+        }
+        .desc h4 {
+            color:#1a5fb4; margin: 14px 0 8px 0; padding-bottom:4px;
+            border-bottom:2px solid #e0e8f0;
+        }
+        .desc h4:first-child { margin-top:0; }
+        .desc code {
+            background:#f4f6f9; padding:2px 6px; border-radius:3px;
+            font-family:Consolas,monospace; color:#c00000;
+        }
+        .tip { text-align:center; font-size:12px; color:#666; margin-top:6px; }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html">首页</a>
+    <a href="laboratory.html">实验仿真</a>
+    <a href="laser.html" class="active">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html">1/4波片</a>
+    <a href="analyzer.html">检偏器</a>
+    <a href="powermeter.html">光功率计</a>
+</div>
+
+<div class="container">
+    <h2>① 半导体激光器 · 独立控制面板</h2>
+
+    <div class="row">
+        <!-- 左：示意图 -->
+        <div class="panel diagram-box">
+            <canvas id="laserCanvas" width="640" height="320"></canvas>
+            <p class="tip">点击下方按钮切换激光器开关；光束颜色与方向实时反馈</p>
+
+            <div class="info-grid">
+                <div class="info-item"><div class="lbl">波长 λ</div><div class="vv">650 nm</div></div>
+                <div class="info-item"><div class="lbl">最大输出</div><div class="vv">5.0 mW</div></div>
+                <div class="info-item"><div class="lbl">偏振特性</div><div class="vv" style="font-size:13px;">部分偏振光</div></div>
+                <div class="info-item"><div class="lbl">工作电压</div><div class="vv" style="font-size:13px;">DC 3~5 V</div></div>
+            </div>
+        </div>
+
+        <!-- 右：控制面板 -->
+        <div class="panel ctrl-section">
+            <h3 style="margin-bottom:14px;color:#0d1b2a;font-size:16px;">实时控制</h3>
+
+            <div class="control-row" style="margin-top:0;">
+                <label>激光开关</label>
+                <button class="toggle-btn" id="btnPower">○ OFF</button>
+            </div>
+
+            <div style="margin-top:20px;padding:14px;background:#f9fafc;border-radius:6px;">
+                <div style="font-size:13px;color:#666;margin-bottom:6px;">当前状态</div>
+                <div style="font-family:Consolas,monospace;font-size:18px;color:#0d1b2a;" id="stateText">关闭</div>
+            </div>
+
+            <div style="margin-top:16px;font-size:13px;color:#555;line-height:1.7;">
+                <strong style="color:#1a5fb4;">快速操作：</strong><br>
+                · 点击上方按钮切换 <code>ON / OFF</code>；<br>
+                · 开关状态会保存到浏览器，切换到"光功率计"页面可立即看到光强变化；<br>
+                · 关闭激光器后，光功率计读数强制归零。
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细说明 -->
+    <div class="desc">
+        <h4>一、仪器功能</h4>
+        <p>半导体激光器（Laser Diode, LD）为本实验提供波长为 <code>λ = 650 nm</code> 的近单色光源，
+        属于可见红光范围（红光），便于在光路中观察对准。</p>
+        <p>650 nm 激光器发出的光具有<strong>部分偏振特性</strong>：在与管脚平行的方向上偏振分量最强，
+        与之垂直的方向上分量最弱，但仍有相当强度。这与真正的线偏振激光（如氦氖激光）不同，
+        因此在本实验中必须配合起偏器使用，才能获得纯净的线偏振光。</p>
+
+        <h4>二、操作方法</h4>
+        <p>· <strong>开机</strong>：开启电源开关前应检查接线是否正确，避免反接损坏器件；
+        本仿真中直接点击按钮即可模拟开关。</p>
+        <p>· <strong>调节输出功率</strong>：通过调节驱动电流可改变输出光强，本实验中功率固定为 5 mW。</p>
+        <p>· <strong>对准起偏器</strong>：点亮激光器后旋转起偏器 P，
+        当<strong>透振方向与激光器最强的偏振分量一致时</strong>，光功率计读数最大（I<sub>0</sub>），
+        此时可将该角度记为 P(0)，作为后续测量的零点。</p>
+        <p>· <strong>关闭激光器</strong>：实验结束时先关激光器再断电源，避免热冲击。</p>
+
+        <h4>三、物理原理</h4>
+        <p>半导体激光器基于受激辐射原理：注入电流产生的电子-空穴对在 PN 结有源区复合时，
+        在反射腔作用下形成受激辐射光，受激辐射光子在谐振腔内多次反射增益后输出相干激光。</p>
+        <p>650 nm 半导体激光器的输出功率–电流关系（P-I 曲线）：
+        当注入电流大于阈值电流 I<sub>th</sub> 后，输出光功率线性增长，
+        本实验所用激光器工作在线性区，输出约 5 mW。</p>
+
+        <h4>四、注意事项</h4>
+        <p>· 半导体激光器属于 3R 类激光产品，<strong>严禁直视激光束</strong>，以免损伤视网膜；</p>
+        <p>· 实验过程中勿遮挡出光口，避免光反馈导致器件损坏；</p>
+        <p>· 激光器外壳可能有轻微发热，属正常现象；</p>
+        <p>· 移动或调换光路时，应先关闭激光器。</p>
+    </div>
+</div>
+
+<script>
+const STORAGE = 'polarization_laserOn';
+const cv = document.getElementById('laserCanvas');
+const ctx = cv.getContext('2d');
+const W = 640, H = 320;
+
+function loadState() {
+    return localStorage.getItem(STORAGE) === 'true';
+}
+function saveState(on) {
+    localStorage.setItem(STORAGE, on);
+}
+
+let on = loadState();
+
+function draw() {
+    // 背景
+    ctx.fillStyle = '#0a1628'; ctx.fillRect(0,0,W,H);
+
+    const cy = H/2;
+
+    // 桌面
+    ctx.fillStyle = '#2a3a5a'; ctx.fillRect(30, cy+70, W-60, 6);
+
+    // 激光器外壳
+    const lx = 100, ly = cy-30;
+    // 主体
+    ctx.fillStyle = '#aaa'; ctx.fillRect(lx, ly, 110, 60);
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    ctx.strokeRect(lx, ly, 110, 60);
+    // 散热片
+    for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = '#777';
+        ctx.fillRect(lx+5, ly+5+i*9, 14, 4);
+    }
+    // 标签
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Microsoft Yahei';
+    ctx.fillText('LD', lx+30, ly+32);
+    ctx.fillText('650nm', lx+24, ly+47);
+    ctx.fillStyle = '#ffaa44'; ctx.font = '10px Microsoft Yahei';
+    ctx.fillText('半导体激光器', lx+25, ly-8);
+    // 指示灯
+    ctx.fillStyle = on ? '#ff4444' : '#553333';
+    ctx.shadowColor = on ? '#ff4444' : 'transparent';
+    ctx.shadowBlur = on ? 12 : 0;
+    ctx.beginPath(); ctx.arc(lx+95, ly+15, 5, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // 开关显示
+    ctx.fillStyle = '#fff'; ctx.font = '10px Microsoft Yahei';
+    ctx.fillText(on ? '[ON]' : '[OFF]', lx+85, ly+58);
+
+    // 激光头
+    ctx.fillStyle = '#444';
+    ctx.fillRect(lx+110, cy-8, 18, 16);
+
+    // 光束
+    if (on) {
+        // 主光束
+        const grad = ctx.createLinearGradient(lx+128, cy, 630, cy);
+        grad.addColorStop(0, 'rgba(255,80,80,0.9)');
+        grad.addColorStop(0.5, 'rgba(255,120,80,0.7)');
+        grad.addColorStop(1, 'rgba(255,160,80,0.3)');
+        ctx.strokeStyle = grad; ctx.lineWidth = 4;
+        ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.moveTo(lx+128, cy); ctx.lineTo(630, cy); ctx.stroke();
+        ctx.shadowBlur = 0;
+        // 散点
+        ctx.fillStyle = 'rgba(255,80,80,0.5)';
+        for (let i = 0; i < 8; i++) {
+            ctx.beginPath();
+            ctx.arc(lx+128+i*70, cy + (Math.sin(i*1.5)*8), 1.5, 0, Math.PI*2);
+            ctx.fill();
+        }
+    } else {
+        // 关闭：虚线表示无光
+        ctx.strokeStyle = '#553333'; ctx.lineWidth = 1;
+        ctx.setLineDash([4,6]);
+        ctx.beginPath(); ctx.moveTo(lx+128, cy); ctx.lineTo(630, cy); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#666'; ctx.font = 'italic 12px Microsoft Yahei';
+        ctx.fillText('（激光器关闭，无光输出）', 380, cy-30);
+    }
+
+    // 远处指示靶
+    ctx.fillStyle = '#3a4a6a';
+    ctx.fillRect(620, cy-30, 10, 60);
+    if (on) {
+        ctx.fillStyle = '#ff6666'; ctx.shadowColor='#ff4444'; ctx.shadowBlur=15;
+        ctx.beginPath(); ctx.arc(625, cy, 6, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0;
+    }
+
+    // 信息条
+    ctx.fillStyle = '#8ab4e8'; ctx.font = 'bold 13px Microsoft Yahei';
+    ctx.fillText('λ = 650 nm　|　P ≤ 5 mW　|　' + (on ? '状态：输出中' : '状态：待机'),
+        30, 30);
+
+    // 标签
+    ctx.fillStyle = '#ffaa44'; ctx.font = '12px Microsoft Yahei';
+    ctx.fillText('650 nm 红光', 480, cy-25);
+}
+
+function toggle() {
+    on = !on;
+    saveState(on);
+    updateUI();
+}
+
+function updateUI() {
+    const btn = document.getElementById('btnPower');
+    btn.textContent = on ? '● ON' : '○ OFF';
+    btn.classList.toggle('on', on);
+    document.getElementById('stateText').textContent = on ? '运行中（输出 650 nm 红光）' : '关闭';
+    document.getElementById('stateText').style.color = on ? '#c00000' : '#666';
+    draw();
+}
+
+document.getElementById('btnPower').addEventListener('click', toggle);
+updateUI();
+</script>
+</body>
+</html>

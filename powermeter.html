@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数字式光功率计 · 偏振光实验</title>
+    <style>
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
+        body {background:#f4f6f9;}
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+        }
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
+        }
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h2 {margin: 18px 0 12px 0; color:#0d1b2a;}
+        .container { max-width: 1260px; margin: 0 auto; padding: 16px; }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .panel { background:#fff; padding:16px; border-radius:7px; box-shadow:0 1px 4px #0001; }
+        .meter-box { flex: 1 1 640px; }
+        .ctrl-section { flex: 1 1 420px; }
+        canvas { display:block; margin:0 auto; }
+
+        .meter-display {
+            background:linear-gradient(135deg,#0d1b2a,#1b2d4a);
+            border-radius:12px; padding:24px 28px;
+            color:#fff; box-shadow:0 4px 16px rgba(0,0,0,0.3);
+            margin-bottom:14px;
+        }
+        .meter-display .brand-row {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:14px;
+        }
+        .meter-display .brand-name {
+            font-size:11px; color:#8ab4e8; letter-spacing:2px;
+        }
+        .meter-display .range-badge {
+            background:rgba(255,255,255,0.1); padding:4px 12px;
+            border-radius:12px; font-size:11px; color:#a8c4e8;
+        }
+        .meter-display .screen {
+            background:#000; border-radius:10px; padding:18px 24px;
+            border:2px solid #2a3a5a; text-align:right;
+            position:relative; overflow:hidden;
+        }
+        .meter-display .screen::before {
+            content:''; position:absolute; top:0; left:0; right:0; bottom:0;
+            background:repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0,212,255,0.04) 2px, rgba(0,212,255,0.04) 4px);
+            pointer-events:none;
+        }
+        .main-reading {
+            font-family:Consolas,monospace; font-size:54px;
+            color:#00d4ff; font-weight:bold; letter-spacing:6px;
+            text-shadow:0 0 18px rgba(0,212,255,0.4); line-height:1.1;
+        }
+        .main-reading.off { color:#333; text-shadow:none; }
+        .reading-unit {
+            font-size:14px; color:#a8c4e8; margin-top:6px;
+        }
+        .reading-meta {
+            font-size:11px; color:#5a7aa0; margin-top:4px;
+        }
+
+        .bar-section { margin-top:14px; }
+        .bar-label {
+            display:flex; justify-content:space-between; font-size:12px;
+            color:#a8c4e8; margin-bottom:6px;
+        }
+        .bar-track {
+            height:10px; background:rgba(255,255,255,0.1);
+            border-radius:5px; overflow:hidden;
+        }
+        .bar-fill {
+            height:100%; background:linear-gradient(90deg,#1a5fb4,#00d4ff);
+            border-radius:5px; width:0%; transition:width 0.25s;
+            box-shadow:0 0 10px rgba(0,212,255,0.3);
+        }
+
+        .status-card {
+            background:#fff; padding:16px; border-radius:7px;
+            box-shadow:0 1px 4px #0001; margin-bottom:12px;
+        }
+        .status-card h4 {
+            color:#0d1b2a; margin-bottom:10px; font-size:14px;
+            padding-bottom:6px; border-bottom:1px dashed #c5d5ea;
+        }
+        .status-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:10px;
+        }
+        .status-item {
+            background:#f9fafc; padding:10px 14px; border-radius:6px;
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .status-item .lbl { font-size:12px; color:#666; }
+        .status-item .vv {
+            font-size:14px; font-family:Consolas,monospace; font-weight:bold;
+        }
+        .vv.on { color:#3fb950; }
+        .vv.off { color:#888; }
+        .vv.num { color:#00d4ff; }
+
+        .desc {
+            background:#fff; padding:18px 22px; border-radius:7px;
+            margin-top:16px; line-height:1.85; font-size:14px; color:#333;
+            box-shadow:0 1px 4px #0001;
+        }
+        .desc h4 {
+            color:#1a5fb4; margin: 14px 0 8px 0; padding-bottom:4px;
+            border-bottom:2px solid #e0e8f0;
+        }
+        .desc h4:first-child { margin-top:0; }
+        .desc code {
+            background:#f4f6f9; padding:2px 6px; border-radius:3px;
+            font-family:Consolas,monospace; color:#c00000;
+        }
+        .tip { text-align:center; font-size:12px; color:#666; margin-top:6px; }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html">首页</a>
+    <a href="laboratory.html">实验仿真</a>
+    <a href="laser.html">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html">1/4波片</a>
+    <a href="analyzer.html">检偏器</a>
+    <a href="powermeter.html" class="active">光功率计</a>
+</div>
+
+<div class="container">
+    <h2>⑤ 数字式光功率计 · 实时读数面板</h2>
+
+    <div class="row">
+        <div class="panel meter-box">
+            <!-- 数字显示 -->
+            <div class="meter-display">
+                <div class="brand-row">
+                    <span class="brand-name">PHOTODETECTOR + DIGITAL METER</span>
+                    <span class="range-badge">RANGE: 0 ~ 5 mW</span>
+                </div>
+                <div class="screen">
+                    <div class="main-reading off" id="mainReading">0.000</div>
+                    <div class="reading-unit">mW (milliwatt)</div>
+                    <div class="reading-meta">λ = 650 nm &nbsp;|&nbsp; Resolution: 0.001 mW</div>
+                </div>
+                <div class="bar-section">
+                    <div class="bar-label">
+                        <span>光强相对值 (I/I₀)</span>
+                        <span id="percentLabel">0.0%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" id="barFill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 状态汇总 -->
+            <div class="status-card">
+                <h4>其他仪器当前设置</h4>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="lbl">① 激光器</span>
+                        <span class="vv off" id="stLaser">OFF</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="lbl">② 起偏器 P</span>
+                        <span class="vv num" id="stP">0°</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="lbl">③ 1/4 波片 C</span>
+                        <span class="vv num" id="stC">0°</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="lbl">④ 检偏器 A</span>
+                        <span class="vv num" id="stA">0°</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel ctrl-section">
+            <h3 style="margin-bottom:14px;color:#0d1b2a;font-size:16px;">实时物理计算</h3>
+
+            <div style="padding:14px 18px;background:#f9fafc;border-radius:6px;
+                        border-left:3px solid #00d4ff;font-family:Consolas,monospace;
+                        font-size:13px;line-height:2;color:#1a5fb4;">
+                <strong>I = I₀[cos²ψ·cos²φ + sin²ψ·sin²φ]</strong><br>
+                <span id="formulaVars">
+                    φ = P − C = 0°, ψ = A − C = 0°
+                </span>
+            </div>
+
+            <div style="margin-top:14px;padding:14px 18px;background:#f9fafc;border-radius:6px;
+                        border-left:3px solid #f0883e;font-size:13px;line-height:1.7;">
+                <div style="color:#888;font-size:11px;margin-bottom:4px;">当前偏振态</div>
+                <div style="color:#0d1b2a;font-weight:bold;" id="polarState">— 无光 —</div>
+            </div>
+
+            <div style="margin-top:14px;padding:14px 18px;background:#f9fafc;border-radius:6px;
+                        border-left:3px solid #3fb950;font-size:13px;line-height:1.7;">
+                <div style="color:#888;font-size:11px;margin-bottom:4px;">实验状态</div>
+                <div id="expStatus" style="color:#0d1b2a;font-weight:bold;">等待激光器开启</div>
+            </div>
+
+            <div style="margin-top:20px;font-size:13px;color:#555;line-height:1.7;">
+                <strong style="color:#1a5fb4;">自动读取设置：</strong><br>
+                · 本页面<strong>不提供独立控制</strong>，仅显示来自其他页面的设置结果；<br>
+                · 切换到「激光器」「起偏器」「1/4 波片」「检偏器」页面调整参数后，
+                回到本页可看到读数变化；<br>
+                · 也可使用「实验仿真」总览页面一次调节全部 5 个参数。
+            </div>
+        </div>
+    </div>
+
+    <div class="desc">
+        <h4>一、仪器功能</h4>
+        <p>带光电接收器的数字式光功率计由两部分组成：</p>
+        <p>· <strong>光电接收器（Photodetector）</strong>：通常采用硅光电二极管，
+        利用光电效应把入射光信号转换为电流信号；</p>
+        <p>· <strong>数字显示表头（Digital Meter）</strong>：把微弱电流放大后通过 A/D 转换，
+        以数字形式显示光功率值，单位 mW（毫瓦）或 μW（微瓦）。</p>
+        <p>本实验所用功率计量程 0~5 mW，分辨率 0.001 mW，
+        工作波长 650 nm 处光电二极管响应最灵敏。</p>
+
+        <h4>二、操作方法</h4>
+        <p>· <strong>调零</strong>：在无光入射时，先调"零点"使显示为 0.000；</p>
+        <p>· <strong>选择量程</strong>：根据预期光强选择合适量程（0~5 mW），避免饱和；</p>
+        <p>· <strong>读数稳定后记录</strong>：光强有微小波动时取平均值；</p>
+        <p>· <strong>数据采集</strong>：验证马吕斯定律时，每隔 10° 或 15° 记录一次读数 I，
+        共取 24~36 个数据点；</p>
+        <p>· <strong>数据处理</strong>：</p>
+        <p>　- 拟合曲线：以 α 为横坐标、I/I₀ 为纵坐标；</p>
+        <p>　- 直线拟合：<code>y = ln(I/I₀)</code>，<code>x = ln(cos α)</code>，斜率应 ≈ -2（理想）；</p>
+        <p>　- 求出 <code>I = I₀·cos<sup>n</sup>α</code> 中的 n 与相关系数 r。</p>
+
+        <h4>三、物理原理</h4>
+        <p>光电二极管基于<strong>光电效应</strong>：当光子能量 hv ≥ 半导体的禁带宽度 E<sub>g</sub> 时，
+        入射光在 PN 结附近产生电子-空穴对，在反向偏压下形成光电流。</p>
+        <p>光电流 I<sub>p</sub> 与入射光功率 P 的关系：
+        <code>I<sub>p</sub> = R · P</code>，
+        其中 R 为响应度（A/W），对 650 nm 的硅光电二极管 R ≈ 0.45 A/W。</p>
+        <p>在本实验中，光功率计的读数反映的是透射光强 I，
+        与起偏器 P、1/4 波片 C、检偏器 A 的设置共同决定：</p>
+        <p>· 无波片（φ = 0）：<code>I = I₀·cos²α</code> （马吕斯定律）；</p>
+        <p>· 有 1/4 波片：
+        <code>I = I₀·[cos²ψ·cos²φ + sin²ψ·sin²φ]</code>，
+        其中 φ = P − C，ψ = A − C。</p>
+
+        <h4>四、实验注意事项</h4>
+        <p>1. <strong>避免强光直射</strong>：本实验激光功率较低，但仍应避免光束直射光电二极管中心感应区；</p>
+        <p>2. <strong>注意量程切换</strong>：当接近满量程（&gt; 4.5 mW）时应切换到更大档位；</p>
+        <p>3. <strong>环境光屏蔽</strong>：实际实验中应使用遮光罩，避免环境光干扰；</p>
+        <p>4. <strong>读数漂移</strong>：光电二极管在长时间工作后会有微小漂移，应定期归零校准；</p>
+        <p>5. <strong>消光读数</strong>：消光位置读数应为 0.000 ± 0.005 mW，若不为零可能存在杂散光。</p>
+    </div>
+</div>
+
+<script>
+const KEYS = {
+    laser: 'polarization_laserOn',
+    P: 'polarization_polarizerAngle',
+    C: 'polarization_waveplateAngle',
+    A: 'polarization_analyzerAngle'
+};
+const I0 = 5.0;
+
+function deg2rad(d) { return d * Math.PI / 180; }
+
+function getState() {
+    return {
+        laserOn: localStorage.getItem(KEYS.laser) === 'true',
+        P: parseFloat(localStorage.getItem(KEYS.P) || '0'),
+        C: parseFloat(localStorage.getItem(KEYS.C) || '0'),
+        A: parseFloat(localStorage.getItem(KEYS.A) || '0')
+    };
+}
+
+function computeIntensity(s) {
+    if (!s.laserOn) return 0;
+    const phi = deg2rad(s.P - s.C);
+    const psi = deg2rad(s.A - s.C);
+    const cP = Math.cos(phi), sP = Math.sin(phi);
+    const cA = Math.cos(psi), sA = Math.sin(psi);
+    return I0 * (cA*cA * cP*cP + sA*sA * sP*sP);
+}
+
+function polarState(s) {
+    if (!s.laserOn) return '— 无光 —';
+    const phiAbs = Math.abs((s.P - s.C) % 180);
+    if (phiAbs < 2 || Math.abs(phiAbs - 90) < 2) return '线偏振光';
+    if (Math.abs(phiAbs - 45) < 2) return '圆偏振光';
+    return '椭圆偏振光';
+}
+
+function update() {
+    const s = getState();
+    const I = computeIntensity(s);
+    const pct = (I / I0) * 100;
+    const alpha = Math.abs((s.A - s.P) % 180);
+
+    // 更新状态汇总
+    const laserEl = document.getElementById('stLaser');
+    laserEl.textContent = s.laserOn ? 'ON' : 'OFF';
+    laserEl.className = 'vv ' + (s.laserOn ? 'on' : 'off');
+    document.getElementById('stP').textContent = s.P.toFixed(0) + '°';
+    document.getElementById('stC').textContent = s.C.toFixed(0) + '°';
+    document.getElementById('stA').textContent = s.A.toFixed(0) + '°';
+
+    // 更新主读数
+    const main = document.getElementById('mainReading');
+    if (s.laserOn) {
+        main.textContent = I.toFixed(3);
+        main.classList.remove('off');
+    } else {
+        main.textContent = '0.000';
+        main.classList.add('off');
+    }
+
+    document.getElementById('percentLabel').textContent = pct.toFixed(1) + '%';
+    document.getElementById('barFill').style.width = pct + '%';
+
+    // 公式变量
+    const phiDeg = s.P - s.C;
+    const psiDeg = s.A - s.C;
+    document.getElementById('formulaVars').innerHTML =
+        `φ = P − C = ${phiDeg}°, ψ = A − C = ${psiDeg}°`;
+
+    // 偏振态
+    document.getElementById('polarState').textContent = polarState(s);
+
+    // 实验状态提示
+    let expStatus = '';
+    if (!s.laserOn) {
+        expStatus = '请先开启激光器';
+    } else if (I < 0.01) {
+        expStatus = '★ 当前为消光状态（光路被阻断）';
+    } else if (pct > 95) {
+        expStatus = '光强接近最大（接近 P ∥ A）';
+    } else {
+        expStatus = `正常运行（I = ${(pct).toFixed(1)}% I₀）`;
+    }
+    document.getElementById('expStatus').textContent = expStatus;
+}
+
+// Listen to storage changes (cross-page)
+window.addEventListener('storage', update);
+// Poll for same-page changes
+setInterval(update, 300);
+
+update();
+</script>
+</body>
+</html>

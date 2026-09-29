@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>1/4 波片 · 偏振光实验</title>
+    <style>
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
+        body {background:#f4f6f9;}
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+        }
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
+        }
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h2 {margin: 18px 0 12px 0; color:#0d1b2a;}
+        .container { max-width: 1260px; margin: 0 auto; padding: 16px; }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .panel { background:#fff; padding:16px; border-radius:7px; box-shadow:0 1px 4px #0001; }
+        .diagram-box { flex: 1 1 640px; }
+        .ctrl-section { flex: 1 1 420px; }
+        canvas { display:block; margin:0 auto; background:#0a1628; border-radius:6px; }
+        .control-row {
+            display:flex; align-items:center; gap:14px; margin:18px 0;
+        }
+        .control-row label { min-width:90px; font-size:14px; color:#333; }
+        input[type=range] { flex:1; }
+        .val {
+            font-family:Consolas,monospace; font-weight:bold;
+            color:#d02828; font-size:16px; min-width:60px; text-align:right;
+        }
+        .quick-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+        .quick-row button {
+            padding:4px 12px; font-size:12px; cursor:pointer;
+            background:#e8eef7; border:1px solid #c5d5ea; border-radius:4px; color:#1a5fb4;
+        }
+        .quick-row button:hover { background:#1a5fb4; color:#fff; }
+        .info-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;
+        }
+        .info-item {
+            background:#f9fafc; padding:10px 14px; border-radius:6px;
+            border-left:3px solid #f0883e;
+        }
+        .info-item .lbl { font-size:11px; color:#888; }
+        .info-item .vv { font-size:16px; color:#0d1b2a; font-weight:bold; font-family:Consolas,monospace; }
+        .desc {
+            background:#fff; padding:18px 22px; border-radius:7px;
+            margin-top:16px; line-height:1.85; font-size:14px; color:#333;
+            box-shadow:0 1px 4px #0001;
+        }
+        .desc h4 {
+            color:#1a5fb4; margin: 14px 0 8px 0; padding-bottom:4px;
+            border-bottom:2px solid #e0e8f0;
+        }
+        .desc h4:first-child { margin-top:0; }
+        .desc code {
+            background:#f4f6f9; padding:2px 6px; border-radius:3px;
+            font-family:Consolas,monospace; color:#c00000;
+        }
+        .tip { text-align:center; font-size:12px; color:#666; margin-top:6px; }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html">首页</a>
+    <a href="laboratory.html">实验仿真</a>
+    <a href="laser.html">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html" class="active">1/4波片</a>
+    <a href="analyzer.html">检偏器</a>
+    <a href="powermeter.html">光功率计</a>
+</div>
+
+<div class="container">
+    <h2>③ 1/4 波片 C · 独立控制面板</h2>
+
+    <div class="row">
+        <div class="panel diagram-box">
+            <canvas id="wpCanvas" width="640" height="340"></canvas>
+            <p class="tip">拖动滑块或点击快捷角度；箭头指示快慢轴方向，黄色为快轴</p>
+
+            <div class="info-grid">
+                <div class="info-item"><div class="lbl">当前角度 C</div><div class="vv" id="angleShow">0°</div></div>
+                <div class="info-item"><div class="lbl">相位差 δ</div><div class="vv">π/2 (90°)</div></div>
+                <div class="info-item"><div class="lbl">工作波长</div><div class="vv">650 nm</div></div>
+                <div class="info-item"><div class="lbl">类型</div><div class="vv" style="font-size:13px;">零级石英波片</div></div>
+            </div>
+        </div>
+
+        <div class="panel ctrl-section">
+            <h3 style="margin-bottom:14px;color:#0d1b2a;font-size:16px;">实时控制</h3>
+
+            <div class="control-row" style="margin-top:0;">
+                <label>旋转角度</label>
+                <input type="range" id="angleSlider" min="0" max="360" step="1" value="0">
+                <span class="val" id="valDisplay">0°</span>
+            </div>
+            <div class="quick-row">
+                <button onclick="setAngle(0)">0°</button>
+                <button onclick="setAngle(15)">15°</button>
+                <button onclick="setAngle(30)">30°</button>
+                <button onclick="setAngle(45)">45°</button>
+                <button onclick="setAngle(60)">60°</button>
+                <button onclick="setAngle(75)">75°</button>
+                <button onclick="setAngle(90)">90°</button>
+            </div>
+
+            <div style="margin-top:20px;padding:14px;background:#f9fafc;border-radius:6px;">
+                <div style="font-size:13px;color:#666;margin-bottom:6px;">波片快慢轴说明</div>
+                <div style="font-size:13px;color:#0d1b2a;line-height:1.7;">
+                    <span style="color:#f0883e;font-weight:bold;">快轴</span>：光程较短（折射率 n<sub>f</sub> 小），
+                    光在该方向上相位延迟较小。<br>
+                    <span style="color:#58a6ff;font-weight:bold;">慢轴</span>：光程较长（折射率 n<sub>s</sub> 大），
+                    光在该方向上相位延迟较大。
+                </div>
+            </div>
+
+            <div style="margin-top:16px;font-size:13px;color:#555;line-height:1.7;">
+                <strong style="color:#1a5fb4;">操作提示：</strong><br>
+                · 入射线偏振光振动方向与快轴夹角 = <code>45°</code> 时出射为圆偏振光；<br>
+                · 夹角 = 0° 或 90° 时仍为线偏振光（仅相位延迟）；<br>
+                · 其他角度为椭圆偏振光。
+            </div>
+        </div>
+    </div>
+
+    <div class="desc">
+        <h4>一、仪器功能</h4>
+        <p>1/4 波片（Quarter-Wave Plate, QWP / C）是一种<strong>相位延迟器件</strong>，
+        它对沿两个正交主平面（快轴 f、慢轴 s）方向振动的线偏振光分量引入 <code>δ = π/2 (90°)</code> 的相位差。</p>
+        <p>由相位差公式 <code>δ = (2π/λ)(n<sub>s</sub> − n<sub>f</sub>) · d</code> 可知，
+        对于工作波长 650 nm，需选择适当的双折射材料（常用云母、石英或聚合物）厚度 d，
+        使其恰好为 (2k+1)λ/4 对应光程差。本实验使用的是<strong>零级 1/4 波片</strong>（多片复合，温稳定性好）。</p>
+
+        <h4>二、操作方法</h4>
+        <p>· <strong>初始对零</strong>：将检偏器 A 的透振方向调到与激光电矢量垂直，
+        出现消光，记为 A(0)；再放上 1/4 波片 C，旋转 C 使再次消光，记为 C(0)。</p>
+        <p>· <strong>改变夹角</strong>：从 C(0) 位置开始，将 C 旋转 θ（0°~90°），
+        即改变了波片快轴与入射线偏振光振动方向的夹角。</p>
+        <p>· <strong>关键实验位置</strong>：θ = 15°、30°、45°、60°、75°、90° 六个标准点：</p>
+        <p>　- θ = 0° 或 90°：波片不起偏振态转换作用，输出仍为线偏振；</p>
+        <p>　- θ = 45°：输出为<strong>圆偏振光</strong>（这是本实验最重要的状态）；
+        旋转检偏器时光强不变；</p>
+        <p>　- 其他角度：输出为<strong>椭圆偏振光</strong>；旋转检偏器时，
+        可观察到强度变化但无消光。</p>
+
+        <h4>三、物理原理</h4>
+        <p>1/4 波片基于晶体的<strong>双折射效应</strong>：方解石、石英等单轴晶体对 o 光（寻常光，振动方向垂直于主平面）
+        和 e 光（非寻常光，振动方向在主平面内）的折射率不同（n<sub>o</sub> ≠ n<sub>e</sub>）。</p>
+        <p>当一束线偏振光以与快轴成 θ 角入射到波片时，可以分解为：</p>
+        <p>· 快轴分量：<code>E<sub>f</sub> = E₀·cosθ</code></p>
+        <p>· 慢轴分量：<code>E<sub>s</sub> = E₀·sinθ</code></p>
+        <p>· 出射后两分量间出现 δ = π/2 的相位差：</p>
+        <p>　- θ = 45° 时，<code>E<sub>f</sub> = E<sub>s</sub></code>，合成为<strong>圆偏振光</strong>；</p>
+        <p>　- θ ≠ 0°、45°、90° 时，合成为<strong>椭圆偏振光</strong>，
+        长短轴之比 = tanθ。</p>
+
+        <h4>四、实验中的具体应用</h4>
+        <p>1. <strong>圆/椭圆偏振光的产生</strong>：θ = 45° 产生圆偏振光；
+        其他角度产生椭圆偏振光；</p>
+        <p>2. <strong>偏振态鉴别</strong>：将待检光通过 1/4 波片后再过检偏器，
+        若原本是圆/椭圆偏振光，可被还原为线偏振光（出现消光），从而与自然光区分；</p>
+        <p>3. <strong>马吕斯定律的修正</strong>：当存在 1/4 波片时，
+        透射光强公式由 <code>I = I₀·cos²α</code> 推广为
+        <code>I = I₀·[cos²ψ·cos²φ + sin²ψ·sin²φ]</code>，
+        其中 φ = P − C，ψ = A − C。</p>
+    </div>
+</div>
+
+<script>
+const STORAGE = 'polarization_waveplateAngle';
+const cv = document.getElementById('wpCanvas');
+const ctx = cv.getContext('2d');
+const W = 640, H = 340;
+
+function deg2rad(d) { return d * Math.PI / 180; }
+function loadState() { return parseFloat(localStorage.getItem(STORAGE) || '0'); }
+function saveState(a) { localStorage.setItem(STORAGE, a.toString()); }
+
+let angle = loadState();
+
+function draw() {
+    ctx.fillStyle = '#0a1628'; ctx.fillRect(0,0,W,H);
+    const cy = H/2 - 10;
+
+    // 桌面
+    ctx.fillStyle = '#2a3a5a'; ctx.fillRect(40, cy+90, W-80, 6);
+
+    // 入射光（线偏振，竖直）
+    ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 3;
+    ctx.shadowColor='#00d4ff'; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.moveTo(50, cy); ctx.lineTo(280, cy); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle = '#00d4ff'; ctx.font = '11px Microsoft Yahei';
+    ctx.fillText('线偏振光（来自起偏器 P）', 80, cy-25);
+
+    // 1/4 波片
+    drawWaveplate(310, cy, angle);
+
+    // 出射光（根据夹角变化）
+    ctx.strokeStyle = '#ffaa44'; ctx.lineWidth = 3;
+    ctx.shadowColor='#ffaa44'; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.moveTo(380, cy); ctx.lineTo(600, cy); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle = '#ffaa44'; ctx.font = '11px Microsoft Yahei';
+    ctx.save();
+    ctx.translate(440, cy-25);
+    ctx.rotate(deg2rad(angle));
+    ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(0, -8); ctx.stroke();
+    ctx.fillText('椭圆/圆/线偏振', 14, 4);
+    ctx.restore();
+
+    // 信息条
+    ctx.fillStyle = '#8ab4e8'; ctx.font = 'bold 13px Microsoft Yahei';
+    ctx.fillText('1/4 波片 C · 独立控制 · 角度：' + angle + '°', 40, 30);
+
+    // 偏振态指示
+    let state = '';
+    const phi = Math.abs(angle % 90);
+    if (phi < 2 || Math.abs(phi - 90) < 2) state = '线偏振光（无变化）';
+    else if (Math.abs(phi - 45) < 2) state = '圆偏振光';
+    else state = '椭圆偏振光';
+    ctx.fillStyle = '#3fb950'; ctx.font = 'bold 13px Microsoft Yahei';
+    ctx.fillText('输出偏振态：' + state, 40, H - 16);
+
+    // 角度表盘
+    const cx = 540, cy_dial = 270;
+    ctx.strokeStyle = '#cdd9e8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy_dial, 35, 0, Math.PI*2); ctx.stroke();
+    for (let i = 0; i < 12; i++) {
+        const a = i * 30 * Math.PI / 180;
+        const r1 = 35, r2 = i % 3 === 0 ? 28 : 32;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.sin(a)*r1, cy_dial - Math.cos(a)*r1);
+        ctx.lineTo(cx + Math.sin(a)*r2, cy_dial - Math.cos(a)*r2);
+        ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(cx, cy_dial);
+    ctx.rotate(deg2rad(angle));
+    ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -32); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Consolas';
+    ctx.fillText(angle + '°', cx-12, cy_dial+50);
+}
+
+function drawWaveplate(cx, cy, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // 波片方块
+    ctx.fillStyle = '#7a5a3a';
+    ctx.fillRect(-32, -48, 64, 96);
+    ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 2.5;
+    ctx.strokeRect(-32, -48, 64, 96);
+
+    // 标记线（原始方向）
+    ctx.fillStyle = '#f0883e'; ctx.font = 'bold 22px Microsoft Yahei';
+    ctx.fillText('C', -8, 6);
+
+    // 快慢轴（旋转 angle）
+    ctx.rotate(deg2rad(angle));
+    // 快轴（黄）
+    ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 3;
+    ctx.shadowColor='#f0883e'; ctx.shadowBlur=6;
+    ctx.beginPath(); ctx.moveTo(-46, 0); ctx.lineTo(46, 0); ctx.stroke();
+    // 慢轴（蓝）
+    ctx.strokeStyle = '#58a6ff';
+    ctx.shadowColor='#58a6ff';
+    ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(0, 46); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 箭头（快轴）
+    ctx.fillStyle = '#f0883e';
+    ctx.beginPath();
+    ctx.moveTo(46, -4); ctx.lineTo(54, 0); ctx.lineTo(46, 4); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-46, -4); ctx.lineTo(-54, 0); ctx.lineTo(-46, 4); ctx.fill();
+
+    ctx.restore();
+
+    // 角度显示
+    ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 12px Consolas';
+    ctx.fillText(angle + '°', cx-15, cy-58);
+}
+
+function setAngle(a) {
+    angle = a;
+    document.getElementById('angleSlider').value = a;
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('valDisplay').textContent = angle + '°';
+    document.getElementById('angleShow').textContent = angle + '°';
+    saveState(angle);
+    draw();
+}
+
+document.getElementById('angleSlider').addEventListener('input', e => {
+    angle = parseFloat(e.target.value);
+    updateUI();
+});
+
+document.getElementById('angleSlider').value = angle;
+updateUI();
+</script>
+</body>
+</html>

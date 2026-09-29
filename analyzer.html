@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>检偏器 · 偏振光实验</title>
+    <style>
+        * {box-sizing: border-box;font-family: "Microsoft Yahei", sans-serif;margin:0;padding:0;}
+        body {background:#f4f6f9;}
+        .topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #0d1b2a, #1b2d4a, #0d1b2a);
+            padding: 0 20px; display: flex; align-items: center; height: 48px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .topnav .brand {
+            color:#fff; font-weight:bold; font-size:15px;
+            margin-right:16px; padding:0 14px; height:48px; line-height:48px;
+        }
+        .topnav a {
+            color:#a8c4e8; text-decoration:none; padding:0 14px;
+            height:48px; line-height:48px; font-size:14px; transition:all 0.2s;
+        }
+        .topnav a:hover { color:#fff; background:rgba(90,160,255,0.15); }
+        .topnav a.active { color:#5aa0ff; border-bottom:2px solid #5aa0ff; }
+        h2 {margin: 18px 0 12px 0; color:#0d1b2a;}
+        .container { max-width: 1260px; margin: 0 auto; padding: 16px; }
+        .row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .panel { background:#fff; padding:16px; border-radius:7px; box-shadow:0 1px 4px #0001; }
+        .diagram-box { flex: 1 1 640px; }
+        .ctrl-section { flex: 1 1 420px; }
+        canvas { display:block; margin:0 auto; background:#0a1628; border-radius:6px; }
+        .control-row {
+            display:flex; align-items:center; gap:14px; margin:18px 0;
+        }
+        .control-row label { min-width:90px; font-size:14px; color:#333; }
+        input[type=range] { flex:1; }
+        .val {
+            font-family:Consolas,monospace; font-weight:bold;
+            color:#d02828; font-size:16px; min-width:60px; text-align:right;
+        }
+        .quick-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+        .quick-row button {
+            padding:4px 12px; font-size:12px; cursor:pointer;
+            background:#e8eef7; border:1px solid #c5d5ea; border-radius:4px; color:#1a5fb4;
+        }
+        .quick-row button:hover { background:#1a5fb4; color:#fff; }
+        .info-grid {
+            display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;
+        }
+        .info-item {
+            background:#f9fafc; padding:10px 14px; border-radius:6px;
+            border-left:3px solid #3fb950;
+        }
+        .info-item .lbl { font-size:11px; color:#888; }
+        .info-item .vv { font-size:16px; color:#0d1b2a; font-weight:bold; font-family:Consolas,monospace; }
+        .desc {
+            background:#fff; padding:18px 22px; border-radius:7px;
+            margin-top:16px; line-height:1.85; font-size:14px; color:#333;
+            box-shadow:0 1px 4px #0001;
+        }
+        .desc h4 {
+            color:#1a5fb4; margin: 14px 0 8px 0; padding-bottom:4px;
+            border-bottom:2px solid #e0e8f0;
+        }
+        .desc h4:first-child { margin-top:0; }
+        .desc code {
+            background:#f4f6f9; padding:2px 6px; border-radius:3px;
+            font-family:Consolas,monospace; color:#c00000;
+        }
+        .tip { text-align:center; font-size:12px; color:#666; margin-top:6px; }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <span class="brand">偏振光与消光实验</span>
+    <a href="index.html">首页</a>
+    <a href="laboratory.html">实验仿真</a>
+    <a href="laser.html">激光器</a>
+    <a href="polarizer.html">起偏器</a>
+    <a href="waveplate.html">1/4波片</a>
+    <a href="analyzer.html" class="active">检偏器</a>
+    <a href="powermeter.html">光功率计</a>
+</div>
+
+<div class="container">
+    <h2>④ 检偏器 A · 独立控制面板</h2>
+
+    <div class="row">
+        <div class="panel diagram-box">
+            <canvas id="anaCanvas" width="640" height="340"></canvas>
+            <p class="tip">拖动滑块旋转检偏器；绿色箭头为透振方向，旋转一周可观察消光位置</p>
+
+            <div class="info-grid">
+                <div class="info-item"><div class="lbl">当前角度 A</div><div class="vv" id="angleShow">0°</div></div>
+                <div class="info-item"><div class="lbl">与 P 夹角 α</div><div class="vv" id="deltaShow">0°</div></div>
+                <div class="info-item"><div class="lbl">输出关系</div><div class="vv" style="font-size:13px;">I = I₀cos²α</div></div>
+                <div class="info-item"><div class="lbl">消光位置</div><div class="vv" style="font-size:13px;">α = 90°</div></div>
+            </div>
+        </div>
+
+        <div class="panel ctrl-section">
+            <h3 style="margin-bottom:14px;color:#0d1b2a;font-size:16px;">实时控制</h3>
+
+            <div class="control-row" style="margin-top:0;">
+                <label>透振方向</label>
+                <input type="range" id="angleSlider" min="0" max="360" step="1" value="0">
+                <span class="val" id="valDisplay">0°</span>
+            </div>
+            <div class="quick-row">
+                <button onclick="setAngle(0)">0°</button>
+                <button onclick="setAngle(30)">30°</button>
+                <button onclick="setAngle(45)">45°</button>
+                <button onclick="setAngle(60)">60°</button>
+                <button onclick="setAngle(90)">90°</button>
+                <button onclick="setAngle(135)">135°</button>
+                <button onclick="setAngle(180)">180°</button>
+                <button onclick="setAngle(270)">270°</button>
+            </div>
+
+            <div style="margin-top:20px;padding:14px;background:#f9fafc;border-radius:6px;">
+                <div style="font-size:13px;color:#666;margin-bottom:6px;">马吕斯定律提示</div>
+                <div style="font-size:13px;color:#0d1b2a;line-height:1.7;">
+                        设 α 为 P 与 A 的夹角，则透过检偏器的光强为
+                        <code>I = I₀·cos²α</code>。
+                        α = 0° 时最大，α = 90° 时消光。
+                </div>
+            </div>
+
+            <div style="margin-top:16px;font-size:13px;color:#555;line-height:1.7;">
+                <strong style="color:#1a5fb4;">操作提示：</strong><br>
+                · 每隔 10° 或 15° 记录一次光强，可验证马吕斯定律；<br>
+                · 旋转一周（约 360°）会出现两次消光位置（α = 90° 和 270°）；<br>
+                · 与 1/4 波片配合时需用推广公式 I = I₀[cos²ψ·cos²φ + sin²ψ·sin²φ]。
+            </div>
+        </div>
+    </div>
+
+    <div class="desc">
+        <h4>一、仪器功能</h4>
+        <p>检偏器（Analyzer, A）用于<strong>检验光的偏振态</strong>。
+        在结构上与起偏器完全相同，都是偏振片，但作用不同：
+        起偏器用于"产生"线偏振光，检偏器用于"分析"光的偏振状态。</p>
+        <p>旋转检偏器的透振方向，根据透射光强的变化规律即可判断入射光的偏振态：</p>
+        <p>· <strong>线偏振光</strong>：旋转 360° 内出现 <strong>两次完全消光</strong>；</p>
+        <p>· <strong>圆偏振光或自然光</strong>：旋转时光强<strong>保持不变</strong>；</p>
+        <p>· <strong>椭圆偏振光或部分偏振光</strong>：旋转时光强<strong>变化但无消光</strong>。</p>
+
+        <h4>二、操作方法</h4>
+        <p>· <strong>验证马吕斯定律</strong>（无波片时）：</p>
+        <p>　1. 在 P 与接收器之间放入 A，旋转 A 找出最大读数 I₀，记为 A(0)；</p>
+        <p>　2. 每隔 10° 或 15° 记录一次透射光强 I，共取 36~24 个数据点；</p>
+        <p>　3. 以 α 为横坐标、I/I₀ 为纵坐标，绘制曲线应与 cos²α 吻合；</p>
+        <p>　4. 以 <code>ln(cos α)</code> 为自变量、<code>ln I</code> 为因变量进行线性拟合，
+        求出 <code>I = I₀·cos<sup>n</sup>α</code> 中的 n（理想偏振片 n = 1）和相关系数 r。</p>
+        <p>· <strong>消光法判别偏振态</strong>：</p>
+        <p>　1. 不放波片，旋转 A，若出现两次消光 → 入射光为线偏振光；</p>
+        <p>　2. 加入 1/4 波片再观察：</p>
+        <p>　　- 若再次出现消光 → 入射光为<strong>圆或椭圆偏振光</strong>；</p>
+        <p>　　- 若仍不消光 → 入射光为<strong>部分偏振光</strong>；</p>
+        <p>　- 强度始终不变 → 入射光为<strong>自然光</strong>。</p>
+
+        <h4>三、物理原理</h4>
+        <p>检偏器的核心是马吕斯定律（Malus's Law）：</p>
+        <p>设入射的线偏振光振动方向与检偏器透振方向的夹角为 α，
+        透过检偏器的光强为 <code>I = I₀·cos²α</code>。</p>
+        <p>· 当 α = 0°：<code>I = I₀</code>（最大）；</p>
+        <p>· 当 α = 90°：<code>I = 0</code>（消光）；</p>
+        <p>· 当 α 在 0°~360° 范围内：I 呈周期性变化，周期 180°。</p>
+        <p>对于<strong>椭圆偏振光</strong>（经过波片后），需用推广公式：
+        <code>I = I₀[cos²ψ·cos²φ + sin²ψ·sin²φ]</code>，
+        其中 φ = P − C，ψ = A − C。</p>
+
+        <h4>四、实验关键点</h4>
+        <p>1. <strong>消光读数应缓慢</strong>：接近消光位置时光强变化极快，需要缓慢转动 A；</p>
+        <p>2. <strong>零点定位</strong>：最大光强位置定为 A(0)，消光位置约在 A(0) + 90°；</p>
+        <p>3. <strong>与 P 严格区分</strong>：本实验需要两套独立的偏振片（结构相同），
+        P 用于产生线偏振光，A 用于检验；</p>
+        <p>4. <strong>数据采集间隔</strong>：测量马吕斯定律曲线时，每 10° 或 15° 取一个数据点，
+        共需 36 或 24 个数据点；</p>
+        <p>5. <strong>消光比</strong>：理想偏振片的消光比 ≥ 100:1，实际使用中要选高消光比的偏振片以减小误差。</p>
+    </div>
+</div>
+
+<script>
+const STORAGE = 'polarization_analyzerAngle';
+const cv = document.getElementById('anaCanvas');
+const ctx = cv.getContext('2d');
+const W = 640, H = 340;
+
+function deg2rad(d) { return d * Math.PI / 180; }
+function loadState() { return parseFloat(localStorage.getItem(STORAGE) || '0'); }
+function saveState(a) { localStorage.setItem(STORAGE, a.toString()); }
+
+// Read P from localStorage to compute alpha
+function getP() { return parseFloat(localStorage.getItem('polarization_polarizerAngle') || '0'); }
+function getLaserOn() { return localStorage.getItem('polarization_laserOn') === 'true'; }
+
+let angle = loadState();
+let P = getP();
+
+function draw() {
+    ctx.fillStyle = '#0a1628'; ctx.fillRect(0,0,W,H);
+    const cy = H/2 - 10;
+
+    // 桌面
+    ctx.fillStyle = '#2a3a5a'; ctx.fillRect(40, cy+90, W-80, 6);
+
+    // 入射光（来自起偏器）
+    ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 3;
+    ctx.shadowColor='#00d4ff'; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.moveTo(50, cy); ctx.lineTo(310, cy); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle = '#00d4ff'; ctx.font = '11px Microsoft Yahei';
+    ctx.fillText('线偏振光（来自 P）', 100, cy-25);
+
+    // 检偏器
+    drawAnalyzer(350, cy, angle);
+
+    // 出射光强可视化
+    const alpha = Math.abs(angle - P) % 180;
+    const alphaR = deg2rad(alpha);
+    const trans = Math.cos(alphaR) ** 2;  // 透射系数（无波片时）
+    let intensity = getLaserOn() ? trans : 0;
+    const beamAlpha = 0.3 + trans * 0.7;
+    ctx.strokeStyle = intensity > 0.05 ? `rgba(0,212,255,${beamAlpha})` : '#553333';
+    ctx.lineWidth = 3;
+    if (intensity > 0.05) {
+        ctx.shadowColor='#00d4ff'; ctx.shadowBlur=8*trans+2;
+    }
+    ctx.beginPath(); ctx.moveTo(410, cy); ctx.lineTo(600, cy); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // 出射光标签
+    ctx.fillStyle = '#5aa0ff'; ctx.font = '12px Consolas';
+    ctx.fillText('I = ' + (intensity*5).toFixed(2) + ' mW', 470, cy-20);
+
+    // 远端接收器
+    ctx.fillStyle = intensity > 0.05 ? '#00d4ff' : '#333';
+    ctx.shadowColor=intensity > 0.05 ? '#00d4ff' : 'transparent';
+    ctx.shadowBlur = intensity > 0.05 ? 10 : 0;
+    ctx.beginPath(); ctx.arc(615, cy, 6, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 信息条
+    ctx.fillStyle = '#8ab4e8'; ctx.font = 'bold 13px Microsoft Yahei';
+    ctx.fillText('检偏器 A · 独立控制 · 角度：' + angle + '°（α = ' + alpha + '°）', 40, 30);
+
+    // 实时消光指示
+    ctx.fillStyle = (intensity < 0.02 && getLaserOn()) ? '#c00000' : '#666';
+    ctx.font = 'bold 14px Microsoft Yahei';
+    if (intensity < 0.02 && getLaserOn()) {
+        ctx.fillText('★ 当前处于消光状态（α ≈ 90°）', 40, H - 16);
+    } else {
+        ctx.fillText('当前光强：I = I₀·cos²(' + alpha + '°) = ' + (trans).toFixed(3) + ' I₀', 40, H - 16);
+    }
+
+    // 角度表盘
+    const cx = 540, cy_dial = 270;
+    ctx.strokeStyle = '#cdd9e8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy_dial, 35, 0, Math.PI*2); ctx.stroke();
+    for (let i = 0; i < 12; i++) {
+        const a = i * 30 * Math.PI / 180;
+        const r1 = 35, r2 = i % 3 === 0 ? 28 : 32;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.sin(a)*r1, cy_dial - Math.cos(a)*r1);
+        ctx.lineTo(cx + Math.sin(a)*r2, cy_dial - Math.cos(a)*r2);
+        ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(cx, cy_dial);
+    ctx.rotate(deg2rad(angle));
+    ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -32); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Consolas';
+    ctx.fillText(angle + '°', cx-12, cy_dial+50);
+}
+
+function drawAnalyzer(cx, cy, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.fillStyle = '#3a5a4a';
+    ctx.fillRect(-32, -48, 64, 96);
+    ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 2.5;
+    ctx.strokeRect(-32, -48, 64, 96);
+
+    ctx.fillStyle = '#3fb950'; ctx.font = 'bold 22px Microsoft Yahei';
+    ctx.fillText('A', -8, 6);
+
+    ctx.rotate(deg2rad(angle));
+    ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 3;
+    ctx.shadowColor='#3fb950'; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(0, 60); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-5, 52); ctx.lineTo(0, 62); ctx.lineTo(5, 52);
+    ctx.moveTo(-5, -52); ctx.lineTo(0, -62); ctx.lineTo(5, -52);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
+
+    ctx.fillStyle = '#ffaa44'; ctx.font = 'bold 12px Consolas';
+    ctx.fillText(angle + '°', cx-15, cy-58);
+}
+
+function setAngle(a) {
+    angle = a;
+    document.getElementById('angleSlider').value = a;
+    updateUI();
+}
+
+function updateUI() {
+    const alpha = Math.abs(angle - P) % 180;
+    document.getElementById('valDisplay').textContent = angle + '°';
+    document.getElementById('angleShow').textContent = angle + '°';
+    document.getElementById('deltaShow').textContent = alpha + '°';
+    saveState(angle);
+    draw();
+}
+
+document.getElementById('angleSlider').addEventListener('input', e => {
+    angle = parseFloat(e.target.value);
+    updateUI();
+});
+
+// Listen for P changes (read-only)
+window.addEventListener('storage', e => {
+    if (e.key === 'polarization_polarizerAngle') {
+        P = getP();
+        updateUI();
+    }
+});
+
+setInterval(() => {
+    const newP = getP();
+    if (newP !== P) { P = newP; updateUI(); }
+}, 500);
+
+document.getElementById('angleSlider').value = angle;
+updateUI();
+</script>
+</body>
+</html>
